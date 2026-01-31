@@ -1,53 +1,58 @@
-from dataclasses import dataclass
+from __future__ import annotations
 
+from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..obj.workspace import Workspace
 
-from ..socket import command_send
+from ..socket import MonitorJson, workspaces
+
 
 @dataclass
 class Monitor:
-    id:int
-    name:str
-    description:str
-    make:str
-    model:str
-    serial:str
-    width:int
-    height:int
-    refresh_rate:float
-    x:int
-    y:int
-    active_workspace_id:int
-    active_workspace_name:str
-    special_workspace_id:int
-    special_workspace_name:str
-    reserved:list
-    scale:float
-    transform:int
-    focused:bool
-    dpms_status:bool
-    vrr:bool
-    actively_tearing:bool
-    disabled:bool
-    current_format:str
-    available_modes:list[str]
+    id: int
+    name: str
+    description: str
+    make: str
+    model: str
+    serial: str
+    width: int
+    height: int
+    refresh_rate: float
+    x: int
+    y: int
+    active_workspace_id: int
+    active_workspace_name: str
+    special_workspace_id: int
+    special_workspace_name: str
+    reserved: Sequence[int]
+    scale: float
+    transform: int
+    focused: bool
+    dpms_status: bool
+    vrr: bool
+    actively_tearing: bool
+    disabled: bool
+    current_format: str
+    available_modes: Sequence[str]
 
-    def fetch_active_workspace(self)->'Workspace':
-        for data in command_send("workspaces"):
-            if id and data["id"] == self.active_workspace_id:
-                return Workspace.from_json(data)
+    def fetch_active_workspace(self) -> Workspace | None:
+        for workspace in workspaces():
+            if workspace["id"] == self.active_workspace_id:
+                return Workspace.from_json(workspace)
+        return None
 
-    def fetch_special_workspace(self)->'Workspace':
-        for data in command_send("workspaces"):
-            if id and data["id"] == self.special_workspace_id:
-                return Workspace.from_json(data)
+    def fetch_special_workspace(self) -> Workspace | None:
+        for workspace in workspaces():
+            if workspace["id"] == self.special_workspace_id:
+                return Workspace.from_json(workspace)
+        return None
 
-    @staticmethod
-    def from_json(data:dict):
-        return Monitor(
+    @classmethod
+    def from_json(cls, data: MonitorJson):
+        return cls(
             id=data["id"],
             name=data["name"],
             description=data["description"],
@@ -72,5 +77,5 @@ class Monitor:
             actively_tearing=data["activelyTearing"],
             disabled=data["disabled"],
             current_format=data["currentFormat"],
-            available_modes=data["availableModes"]
+            available_modes=data["availableModes"],
         )
